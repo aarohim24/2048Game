@@ -1,0 +1,177 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <conio.h>
+
+#define SIZE 4
+
+int board[SIZE][SIZE];
+
+void initBoard() {
+    for (int i = 0; i < SIZE; i++)
+        for (int j = 0; j < SIZE; j++)
+            board[i][j] = 0;
+
+    for (int i = 0; i < 2; i++) {
+        int x = rand() % SIZE;
+        int y = rand() % SIZE;
+        while (board[x][y] != 0) {
+            x = rand() % SIZE;
+            y = rand() % SIZE;
+        }
+        board[x][y] = (rand() % 2 + 1) * 2;
+    }
+}
+
+void drawBoard() {
+    system("cls");
+    printf("\n\n2048 GAME\n\n");
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (board[i][j] == 0)
+                printf(" .\t");
+            else
+                printf(" %d\t", board[i][j]);
+        }
+        printf("\n\n");
+    }
+}
+
+void addRandomTile() {
+    int empty = 0;
+    int positions[SIZE * SIZE][2];
+
+    for (int i = 0; i < SIZE; i++)
+        for (int j = 0; j < SIZE; j++)
+            if (board[i][j] == 0) {
+                positions[empty][0] = i;
+                positions[empty][1] = j;
+                empty++;
+            }
+
+    if (empty > 0) {
+        int r = rand() % empty;
+        int x = positions[r][0];
+        int y = positions[r][1];
+        board[x][y] = (rand() % 2 + 1) * 2;
+    }
+}
+
+int slideLeft() {
+    int moved = 0;
+    for (int i = 0; i < SIZE; i++) {
+        int temp[SIZE] = {0};
+        int pos = 0;
+
+        for (int j = 0; j < SIZE; j++) {
+            if (board[i][j] != 0) {
+                if (temp[pos] == 0)
+                    temp[pos] = board[i][j];
+                else if (temp[pos] == board[i][j]) {
+                    temp[pos] *= 2;
+                    pos++;
+                } else {
+                    pos++;
+                    temp[pos] = board[i][j];
+                }
+            }
+        }
+
+        for (int j = 0; j < SIZE; j++) {
+            if (board[i][j] != temp[j]) {
+                board[i][j] = temp[j];
+                moved = 1;
+            }
+        }
+    }
+    return moved;
+}
+
+void rotateBoard() {
+    int temp[SIZE][SIZE];
+    for (int i = 0; i < SIZE; i++)
+        for (int j = 0; j < SIZE; j++)
+            temp[i][j] = board[i][j];
+
+    for (int i = 0; i < SIZE; i++)
+        for (int j = 0; j < SIZE; j++)
+            board[i][j] = temp[SIZE - j - 1][i];
+}
+
+int move(char direction) {
+    int moved = 0;
+
+    switch (direction) {
+        case 'w':
+            rotateBoard(); rotateBoard(); rotateBoard();
+            moved = slideLeft();
+            rotateBoard();
+            break;
+        case 's':
+            rotateBoard();
+            moved = slideLeft();
+            rotateBoard(); rotateBoard(); rotateBoard();
+            break;
+        case 'a':
+            moved = slideLeft();
+            break;
+        case 'd':
+            rotateBoard(); rotateBoard();
+            moved = slideLeft();
+            rotateBoard(); rotateBoard();
+            break;
+    }
+
+    return moved;
+}
+
+int canMove() {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (board[i][j] == 0)
+                return 1;
+            if (i < SIZE - 1 && board[i][j] == board[i + 1][j])
+                return 1;
+            if (j < SIZE - 1 && board[i][j] == board[i][j + 1])
+                return 1;
+        }
+    }
+    return 0;
+}
+
+int checkWin() {
+    for (int i = 0; i < SIZE; i++)
+        for (int j = 0; j < SIZE; j++)
+            if (board[i][j] == 2048)
+                return 1;
+    return 0;
+}
+
+int main() {
+    char ch;
+    srand(time(NULL));
+    initBoard();
+    drawBoard();
+
+    while (1) {
+        ch = getch();
+        if (ch == 'q') break;
+
+        if (move(ch)) {
+            addRandomTile();
+            drawBoard();
+
+            if (checkWin()) {
+                printf("\nYou reached 2048! You win!\n");
+                break;
+            }
+
+            if (!canMove()) {
+                printf("\nGame Over! No more moves.\n");
+                break;
+            }
+        }
+    }
+
+    return 0;
+}
